@@ -14,5 +14,5 @@ It needs a `info.h`, that contains the wifi information.
 
 # TODO
 
-- Add connection to business logic.
 - Clean up mainloop in server
+
