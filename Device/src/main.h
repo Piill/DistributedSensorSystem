@@ -5,6 +5,8 @@
 
 #define MAXMESSAGE 255
 #define INTERVAL 5000
+#define TYPE_DIGITAL 0
+#define TYPE_ANALOG 1
 
 struct sensor {
   uint32_t id;

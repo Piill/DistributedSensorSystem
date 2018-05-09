@@ -25,12 +25,12 @@ while conf == None:
     sock.sendall(encode_message(message_type['REGISTER'], reg))
     received = decode_message(sock.recv(1024))
     if received['type'] == message_type['CONFIG']:
-        print("New conf")
+        print("New config recieved:")
         conf = received['config']
         print(conf)
         sock.sendall(encode_message(message_type['ACK'], reg))
     elif received['type'] == message_type['ACK']:
-        print("No config")
+        print("No config recieved.")
     elif received['type'] == message_type['ERROR']:
         print("Error")
         Reg()
@@ -40,13 +40,14 @@ while conf == None:
 sock.close()
 
 while True:
-    print("Choose option")
+    print("")
     print("(0) Send data")
     print("(1) Exit program")
+    print("Choose option: ")
     option = None
     while option == None:
         try:
-            option = int(input("\n"))
+            option = int(input(""))
         except:
             print("Not a valid option")
 

@@ -4,7 +4,7 @@ import sys
 import json
 import time
 from protocol import *
-from testData import *
+from data import *
 from loggin import *
 
 
@@ -25,7 +25,8 @@ class ClientConnection(threading.Thread):
                 return None
 
             if header == message_type['DATA']:
-                storeData(message['data'].deviceID, message['data'].dataPoints)
+                print("Got data from device:")
+                uploadData(message['data'])
                 conf = getDevice(message['data'].deviceID)
                 if conf == None:
                     return None
@@ -40,15 +41,14 @@ class ClientConnection(threading.Thread):
             elif header == message_type['REGISTER']:
                 conf = getDevice(message['deviceID'])
                 if conf == None:
-                    print("Reg but no config")
+                    print("Got 'register', but no config is availeble for device")
                     self.socket.sendall(encode_message(message_type['ACK'], None))
                     return None
-                print("Reg, sending config")
+                print("Got 'register', sending config")
                 self.socket.sendall(encode_message(message_type['CONFIG'], conf))
                 time.sleep(1);
                 self.data = self.socket.recv(1024)
                 message = decode_message(self.data)
-                print("Debug3")
                 if message['type'] != message_type['ACK']:
                     print("Send config, no ack")
                     self.socket.sendall(encode_message(message_type['ERROR'], None))
@@ -59,7 +59,7 @@ class ClientConnection(threading.Thread):
             else:
                 self.socket.sendall(encode_message(message_type['ERROR'], None))
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error:", sys.exc_info())
 
 
 if __name__ == "__main__":

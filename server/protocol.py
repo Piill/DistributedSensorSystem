@@ -22,16 +22,10 @@ def encode_message(m_type, in_data):
     return data
 
 def decode_message(raw_data):
-    print("Decode message")
-    print("len: " + str(len(raw_data)))
-    print("type: " + str(raw_data[0]))
-    print("Data: " + str(raw_data))
-
     message = {}
     if raw_data[0] < 6 and raw_data[0] > 0:
         message['type'] = raw_data[0]
     else:
-        print("No message header: " + raw_data[0])
         return None
 
     if message['type'] == message_type['REGISTER']:
@@ -107,7 +101,6 @@ class SensorData:
         self.dataPoints = dataPoints
 
     def fromBytes(self, data):
-        print("SensorData fromBytes. ByteLen: " + str(len(data)))
         self.deviceID = int.from_bytes(data[0:4], byteorder='big')
         self.numSensors = data[4]
         self.dataPoints = []

@@ -1,26 +1,27 @@
 #include "main.h"
 #include "info.h"
 
-
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
-const char* server = "159.89.134.40";
 WiFiClient client;
 struct config client_config;
 bool configured = false;
 
-uint32_t deviceID;
+// Generate random deviceID, based on the compile time.
+// This means we should recompile fore every new device
+const uint32_t deviceID = (((uint32_t)__TIME__[0]) + ((uint32_t)__TIME__[1]*10) + (__TIME__[6]*100)) * (((uint32_t)__TIME__[7])*1000);
+// const uint32_t deviceID = 1;
 
 void setup() {
-  randomSeed(analogRead(0));
-  deviceID = random(4294967290);
   // put your setup code here, to run once:
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+  Serial.print("DeviceID: ");
+  Serial.println(deviceID);
+
 }
 
-int i = 0;
 
 bool loop_error;
 void loop() {
@@ -45,6 +46,7 @@ void loop() {
         configured = true;
         memcpy(&client_config, buffer, sizeof(struct config));
         sendAck();
+        init_config();
       }
       break;
       default:
@@ -72,6 +74,7 @@ void loop() {
         free(client_config.sensors);
         memcpy(&client_config, buffer, sizeof(struct config));
         sendAck();
+        init_config();
       }
       break;
 
@@ -87,7 +90,7 @@ void loop() {
 
 void init_config() {
   for(int i = 0; i < client_config.numSensors; i++) {
-    if(client_config.sensors[i].type == 0) {
+    if(client_config.sensors[i].type == TYPE_DIGITAL) {
       pinMode(client_config.sensors[i].pin, INPUT);
     }
   }
@@ -136,7 +139,6 @@ MESSAGE_TYPE decode_message(void* out_buffer) {
 }
 
 uint32_t combine_int(uint8_t* in) {
-  //return in[0] | (in[1] >> 8) | (in[2] >> 8*2) | (in[3] >> 8*3);
   return in[3] | (in[2] >> 8) | (in[1] >> 8*2) | (in[0] >> 8*3);
 }
 
@@ -145,7 +147,7 @@ struct sensor_data* read_data() {
 
   for(int i = 0; i < client_config.numSensors; i++) {
     sd[i].id = client_config.sensors[i].id;
-    if(client_config.sensors[i].type == 0) {
+    if(client_config.sensors[i].type == TYPE_DIGITAL) {
       sd[i].data = digitalRead(client_config.sensors[i].pin);
     } else {
       sd[i].data = analogRead(client_config.sensors[i].pin);
@@ -170,20 +172,19 @@ void sendData() {
   for(int i = 0; i < client_config.numSensors; i++) {
     Serial.print("Sending (id, data): ");
     Serial.print(sd[i].id);
+    Serial.print(", ");
+    Serial.print(sd[i].data);
     sendInt(sd[i].id);
     sendInt(sd[i].data);
   }
 }
 
 void ensure_connection() {
-  // put your main code here, to run repeatedly:
   while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to WPA SSID: ");
     Serial.println(ssid);
-    // Connect to WPA/WPA2 network:
     status = WiFi.begin(ssid, pass);
 
-    // wait 5 seconds for connection:
     delay(5000);
   }
   while(!client.connected()) {
